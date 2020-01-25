@@ -1,0 +1,17 @@
+[
+  {
+    "btnIconPath": "media/icon.png",
+    "btnName": "FundBtn",
+    "btnText": "Фундамент",
+    "section": {
+    	"КЖ":[],
+    	"КМ":[],
+    	"АС":[]
+    }
+  },
+  {
+    "btnName": "EstBtn",
+    "btnText": "Кнопка2",
+    "section": {}
+  }
+]
