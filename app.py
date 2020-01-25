@@ -37,22 +37,87 @@ class MainApp(QWidget):
         # и добавление их в коллекцию для доступа в будущем
         self.btnCollection = []
         for btnData in self.Config:
-            btnIconPath = btnData.get("btnIconPath", "")
+            btnIconPath = btnData.get("Путь к иконке", "")
             if os.path.exists(btnIconPath):
                 icon = QIcon(btnIconPath)
             else: icon = QIcon()
-            btnText = btnData.get("btnText")
-            btnName = btnData.get("btnName")
+            btnText = btnData.get("Тип сооружения")
             
             btn = QPushButton(icon, btnText, self)
-            btn.setObjectName(btnName)
             btn.clicked.connect(self.button_clicked)
             layout.addWidget(btn)
             self.btnCollection.append(btn)
 
     def button_clicked(self):
         btnText = self.sender().text()
-        sections = [i for i in self.Config if i['btnText'] == btnText][0]
+        inputDataConfig = [i for i in self.Config if i['Тип сооружения'] == btnText][0]['Раздел']
+        dialog = InputDataDialog(inputDataConfig)
+
+
+class InputDataDialog(QDialog):
+
+    def __init__(self, config):
+        super().__init__()
+        loadUi(r"./ui/inputDialog.ui", self)
+        self.backButton.setEnabled(False)
+        self.config = config
+        self.loadSectionSheet(self.Stack.widget(0), config.keys())
+        self.loadSignals()
+        self.exec()
+
+
+    def loadSignals(self):
+        self.nextButton.clicked.connect(self.nextButton_clicked)
+        self.backButton.clicked.connect(self.backButton_clicked)
+        self.acceptButton.clicked.connect(self.acceptButton_clicked)
+        self.buttonGroup.buttonClicked.connect(self.radioButtonGroup_clicked)
+
+    def loadSectionSheet(self, parent, data):
+        layout = QVBoxLayout(parent)
+        self.buttonGroup = QButtonGroup(parent)
+        for section in data:
+            radio = QRadioButton(section, parent)
+            self.buttonGroup.addButton(radio)
+            layout.addWidget(radio)
+
+    def loadInputSheet(self, parent, data):
+        layout = QGridLayout(parent)
+        for i in range(len(data)):
+            nameLabel = QLabel(data[i].get("Переменная"), parent)
+            measureLabel = QLabel(data[i].get("Ед.изм."), parent)
+            le = QLineEdit(parent)
+            layout.addWidget(nameLabel, i, 0)
+            layout.addWidget(le, i, 1)
+            layout.addWidget(measureLabel, i, 2)
+
+    def loadOutputSheet(self, parent, data):
+        layout = QGridLayout(parent)
+
+
+    def radioButtonGroup_clicked(self, btn):
+        inputWidget = self.Stack.widget(1)
+        outputWidget = self.Stack.widget(2)
+        inputLayout = inputWidget.layout()
+        if inputLayout != None:
+            for i in reversed(range(inputLayout.count())): 
+                inputLayout.itemAt(i).widget().setParent(None)
+        self.loadInputSheet(inputWidget, self.config[btn.text()]['Ввод'])
+
+    def nextButton_clicked(self):
+        curInd = self.Stack.currentIndex()
+        self.Stack.setCurrentIndex(curInd + 1)
+        self.backButton.setEnabled(True)
+        self.nextButton.setEnabled(curInd != self.Stack.count()-2) 
+
+    def backButton_clicked(self):
+        curInd = self.Stack.currentIndex()
+        self.Stack.setCurrentIndex(curInd - 1)
+        self.nextButton.setEnabled(True)
+        self.backButton.setEnabled(curInd - 1 != 0 )
+
+    def acceptButton_clicked(self):
+        self.accept()
+
 
 
 
