@@ -7,12 +7,46 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.uic import loadUi
 
+class MainApp(QMainWindow):
+    def __init__(self):
+        """Инициализация главного окна"""
+        super().__init__()
+        self.initMenu()
+        self.initCentralWidget()
 
-class MainApp(QWidget):
+    def initMenu(self):        
+        editConfigAction = QAction("&Редактировать", self)
+        editConfigAction.triggered.connect(self.editConfig)
+
+        fileMenu = self.menuBar().addMenu("&Конфигурация")
+        fileMenu.addAction(editConfigAction)
+
+    def initCentralWidget(self):
+        self.setCentralWidget(CentralWidget())
+
+    def editConfig(self):
+        dialog = ConfigConstructor()
+        dialog.exec()
+
+
+class ConfigConstructor(QDialog):
+    def __init__(self):
+        """Инициализация центрального виджета"""
+        super().__init__()        
+        loadUi(r"./ui/configConstructor.ui", self)
+        self.model = QStandardItemModel()
+        self.treeView.setModel(self.model)
+
+        item = QStandardItem("nest")
+        item.insertRows(0, 3)
+        self.model.appendRow(QStandardItem(item))
+        self.model.appendRow(QStandardItem("test"))
+
+class CentralWidget(QWidget):
     structFilePath = "./config.json"
 
     def __init__(self):
-        """Инициализация главного виджета"""
+        """Инициализация центрального виджета"""
         super().__init__()
         self.loadConfig()
         self.loadUI()
