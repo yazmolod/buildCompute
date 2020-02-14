@@ -9,6 +9,29 @@ from PyQt5.uic import loadUi
 
 from configBuilder import ConfigConstructor
 
+class workTableModel(QAbstractTableModel):
+    def __init__(self, parent=None):        
+        super().__init__(parent)
+        self.innerData = [["","","",""]]
+
+    def addData(self, data):        
+        self.innerData += data
+        self.layoutChanged.emit()
+
+    def rowCount(self, *args):
+        return len(self.innerData)
+
+    def columnCount(self, *args):
+        return len(self.innerData[0])
+
+    def data(self, index, role=Qt.DisplayRole):
+        if role == Qt.DisplayRole:
+            i = index.row()
+            j = index.column()
+            return '{0}'.format(self.innerData[i][j])
+        else:
+            return QVariant()
+
 class MainApp(QMainWindow):
     structFilePath = "./config.json"
     def __init__(self):
@@ -47,15 +70,13 @@ class CentralWidget(QWidget):
     def __init__(self, parent=None):
         """Инициализация центрального виджета"""
         super().__init__(parent=parent)
+        self.tableModel = workTableModel()
         self.loadUI()
     
     def loadUI(self):
         """Загрузка интерфейса"""
-
-        # Расположение элементов по сетке
-        layout = QVBoxLayout()
-        self.setLayout(layout)
-
+        loadUi(r'./ui/CentralWidget.ui', self)
+        self.excelExportButton.clicked.connect(self.export_clicked)
         # Загрузка всех кнопок в соответствии с файлом конфига
         # и добавление их в коллекцию для доступа в будущем
         self.btnCollection = []
@@ -68,13 +89,26 @@ class CentralWidget(QWidget):
             
             btn = QPushButton(icon, btnText, self)
             btn.clicked.connect(self.button_clicked)
-            layout.addWidget(btn)
+            self.workButtons.layout().addWidget(btn)
             self.btnCollection.append(btn)
+        # обработка TableView с результами
+        self.tableView.setModel(self.tableModel)
 
     def button_clicked(self):
         btnText = self.sender().text()
         inputDataConfig = [i for i in self.parent().Config if i['Name'] == btnText][0]['Sections']
         dialog = InputDataDialog(inputDataConfig)
+        ret = dialog.exec_()
+        if ret == QDialog.Accepted:
+            self.addNewWork(dialog.tableResult)
+
+    def addNewWork(self, tableResult):
+        self.tableModel.addData(tableResult)
+        self.tableView.update()
+
+    def export_clicked(self):
+        print ('Export excel')
+
 
 
 class InputDataDialog(QDialog):
@@ -88,7 +122,6 @@ class InputDataDialog(QDialog):
         self.config = config
         self.loadSectionSheet(self.Stack.widget(0), [i.get("Name") for i in config])
         self.loadSignals()
-        self.exec()
 
 
     def loadSignals(self):
@@ -136,7 +169,6 @@ class InputDataDialog(QDialog):
             layout.addWidget(measureLabel, i, 2)
 
     def updateOutputs(self, *args):
-        print (1)
         for o in self.outputs:
             print (o.formula)
             exec('global xxx; xxx = ' + o.formula)
@@ -167,9 +199,8 @@ class InputDataDialog(QDialog):
         self.backButton.setEnabled(curInd - 1 != 0 )
 
     def acceptButton_clicked(self):
+        self.tableResult = [["", "", "", i.value()] for i in self.outputs]
         self.accept()
-
-
 
 
 if __name__ == '__main__':
