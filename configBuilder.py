@@ -3,26 +3,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.uic import loadUi
 
-class WorkItem():
-	def __init__(self):
-		pass
-
-class SectionItem():
-	def __init__(self):
-		pass
-
-class InputItem():
-	def __init__(self, name, unit):
-		self._name = name
-		self._unit = unit
-
-class OutputItem():
-	def __init__(self, name, unit, formula):
-		self._name = name
-		self._unit = unit
-		self._formula = formula
-
-class TreeNode(object):
+class TreeItem(object):
 	def __init__(self, parent, row):
 		self._parent = parent
 		self._row = row
@@ -37,7 +18,6 @@ class TreeModel(QAbstractItemModel):
 		super().__init__(self)
 
 
-
 class ConfigConstructor(QDialog):
     def __init__(self, config):
         """Дмалог набора конфига"""
@@ -46,15 +26,19 @@ class ConfigConstructor(QDialog):
         self.model = QStandardItemModel()
         self.treeView.setModel(self.model)
 
-        item = QStandardItem("nest")
-        item.insertRows(0, 3)
-        self.model.appendRow(QStandardItem(item))
-        self.model.appendRow(QStandardItem("test"))
+        self.buildTree(config)
 
-    def buildTree(self, structure):
-    	d = {}
+    def buildTree(self, structure):    	
     	for work in structure:
     		workItem = QStandardItem(work.get("Name", ""))
-    		for section in work.get("Children", {}):
-    			pass
+    		for section in work.get("Sections", []):
+    			sectionItem = QStandardItem(section.get("Name", ""))
+    			for inp in section.get("Inputs", []):
+    				inpItem = QStandardItem(inp.get("Name", ""))
+    				sectionItem.appendRow(inpItem)
+    			for out in section.get("Outputs", []):
+    				outItem = QStandardItem(out.get("Name", ""))
+    				sectionItem.appendRow(outItem)
+    			workItem.appendRow(sectionItem)
+    		self.model.appendRow(workItem)
 

@@ -112,6 +112,16 @@ class CentralWidget(QWidget):
 
     def export_clicked(self):        
         data = self.tableModel.innerData
+        fn = QFileDialog.getSaveFileName(parent=self, filter="(*.xlsx)")[0]
+        if fn:
+            wb = openpyxl.Workbook()
+            ws = wb.active
+            for i in range(len(data)):
+                ws.cell(i+1, 2).value = data[i]['Name']
+                ws.cell(i+1, 3).value = data[i]['Unit']
+                ws.cell(i+1, 4).value = data[i]['Value']
+            wb.save(fn)
+            QMessageBox.information(self, "Результат", "Файл успешно экспортирован")
 
 
 
